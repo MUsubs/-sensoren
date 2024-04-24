@@ -32,18 +32,19 @@ private:
     unsigned int frequency;
     unsigned int bit_delay;
     int led_pin;
-    unsigned int index;
     std::deque<uint8_t>* bytes;
+    std::deque<uint8_t> bytes_backup;
     xQueueHandle bytes_queue;
+    PinStatus pin_state;
 
     uint8_t generateChecksum( std::deque<uint8_t>& bytes );
     void sendByte( uint8_t byte );
     void sendBit( bool bit );
 
-    enum class state_t { IDLE, SENDSYNC, SENDBYTE, SENDEND, SENDONE, SENDZERO };
+    enum class state_t { IDLE, SENDSYNC, SENDBYTE, SENDEND, SENDBIT };
 
-    state_t state = IDLE;
-    state_t return_state = IDLE;
+    state_t state = state_t::IDLE;
+    state_t return_state = state_t::IDLE;
 };
 
 }  // namespace sen

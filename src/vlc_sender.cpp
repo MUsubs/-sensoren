@@ -4,13 +4,14 @@ namespace sen {
 
 // public
 VLCSender::VLCSender( int led_pin, unsigned int frequency ) :
-    frequency{ frequency },
-    led_pin{ led_pin },
-    index{ 0 },
-    bytes{},
+    frequency{ frequency }, led_pin{ led_pin }, bytes{}, bytes_backup{},
     bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) } {
     pinMode( led_pin, OUTPUT );
     // bit delay in seconds
+    if ( frequency <= 0 ) {
+        Serial.printf( "== ERROR == frequency <= 0, setting it to 1 and continuing" );
+        frequency = 1;
+    }
     bit_delay = 1 / frequency;
 }
 
@@ -26,6 +27,7 @@ void VLCSender::sendBytes( std::deque<uint8_t>& bytes ) {
 
 void VLCSender::setFrequency( unsigned int new_frequency ) {
     frequency = new_frequency;
+    bit_delay = 1 / frequency;
 }
 
 unsigned int VLCSender::getFrequency() {
@@ -33,7 +35,12 @@ unsigned int VLCSender::getFrequency() {
 }
 
 void VLCSender::run() {
-    Serial.printf("== INFO == Starting VLCSender run");
+    Serial.printf( "== INFO == Starting VLCSender run" );
+    unsigned long start;
+    unsigned long end;
+    unsigned int index;
+    PinStatus pin_state;
+
     for ( ;; ) {
         switch ( state ) {
             case state_t::IDLE:
@@ -42,6 +49,7 @@ void VLCSender::run() {
                     if ( xQueueReceive( bytes_queue, bytes, 0 ) ) {
                         // set index to 0
                         index = 0;
+                        bytes_backup = *bytes;
                         // change to SENDSYNC
                         state = state_t::SENDSYNC;
                     }
@@ -50,40 +58,49 @@ void VLCSender::run() {
                 }
                 break;
             case state_t::SENDSYNC:
-                // set return_state to SENDSYNC;
-                // if index < 8 {
-                // if index % 2 == 1 change to SENDONE
-                // else change to SENDZERO
-                // increment index
-                // }
-                // set index to 0
-                // change to SENDBYTE
+                return_state = state_t::SENDSYNC;
+                if ( index < 8 ) {
+                    pin_state = ( index % 2 == 0 ) ? HIGH : LOW;
+                    index++;
+                    state = state_t::SENDBIT;
+                } else {
+                    index = 0;
+                    state = state_t::SENDBYTE;
+                }
                 break;
             case state_t::SENDBYTE:
-                // if bytes.size == 0 change to return_state
-                // set return_state to SENDBYTE
-                // if (bytes.front & (1 << index)) SENDONE
-                // else SENDZERO
-                // increment index
+                if ( bytes->empty() ) state = state_t::SENDEND;
+                if ( index >= 8 ) {
+                    bytes->pop_front();
+                    index = 0;
+                }
+                return_state = state_t::SENDBYTE;
+                // send MSB first
+                pin_state = ( bytes->front() & ( 0x80 >> index ) ) ? HIGH : LOW;
+                index++;
+                state = state_t::SENDBIT;
                 break;
             case state_t::SENDEND:
-                // ???? TBD
+                // set index to 42 for debugging purposes (this number shouldn't
+                // occur any other way)
+                index = 42;
+                return_state = state_t::IDLE;
+                state = state_t::IDLE;
                 break;
-            case state_t::SENDONE:
-                unsigned long start = micros();
-                unsigned long end = start + bit_delay * 1'000'000;
+            case state_t::SENDBIT:
+                start = micros();
+                end = start + bit_delay * 1'000'000;
+                // technically this blocking loop isn't allowed
+                // for testing sake, I'm keeping it in for now (as of 24 apr)
+                // if this becomes the final communication protocol,
+                // the loop will be subsituted with states
                 while ( micros() <= end ) {
-                    digitalWrite( led_pin, HIGH );
+                    digitalWrite( led_pin, pin_state );
                 }
                 state = return_state;
                 break;
-            case state_t::SENDZERO:
-                unsigned long start = micros();
-                unsigned long end = start + bit_delay * 1'000'000;
-                while ( micros() <= end ) {
-                    digitalWrite( led_pin, LOW );
-                }
-                state = return_state;
+            default:
+                state = state_t::IDLE;
                 break;
         }
     }
