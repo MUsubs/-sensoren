@@ -1,91 +1,56 @@
-// #include <Arduino.h>
+#include <Arduino.h>
 
-// int ledPin = 9;
-// int led2Pin = 10;
-// int delayTime = 1000;
+#include "vlc_sender.hpp"
 
-// // Serial variables
-// char value;
-// String values;
-// String stringValues;
-// int zerosLeft;
-// String zeros;
-// int length;
-// boolean shouldSend;
+int led_pin = LED_BUILTIN;
+long set_freq = 0;
 
-// void setup() {
-//   // Comm
-//   pinMode(ledPin, OUTPUT);
-//   pinMode(led2Pin, OUTPUT);
-//   Serial.begin(9600);
-  
-//   // Threshold
-//   digitalWrite(ledPin, HIGH);
-//   delay(delayTime);
-//   digitalWrite(ledPin, LOW);
-// }
+sen::VLCSender vlc_sender = { led_pin, 4 };
+xTaskHandle vlc_sender_task_handle;
 
-// void loop() {
-//   while (Serial.available()) {
-//     // Get input
-//     value = Serial.read();
-    
-//     // Convert ASCII to binary
-//     zerosLeft = 8 - String(value, BIN).length();
-//     for (int i = 0; i < zerosLeft; i++) {
-//       zeros = zeros + "0";
-//     }
-//     stringValues = stringValues + String(value);
-    
-//     // Build string
-//     values = values + zeros + String(value, BIN);
-    
-//     // Loop
-//     zeros = "";
-//     delay(1);
-//   }
-  
-//   if (values != "") {
-//     // Print ASCII and binary
-//     Serial.print(stringValues);
-//     Serial.print(" = ");
-//     Serial.println(values);
-//     length = values.length();
-//     shouldSend = true;
-//   }
-  
-//   if (shouldSend) {
-//     // OOK modulation
-//     for (int i = 0; i < length; i++) {
-//       digitalWrite(led2Pin, HIGH);
-//       if (i != length - 1) {
-//         if (values.charAt(i) == '0') {
-//           digitalWrite(ledPin, LOW);
-//           delay(delayTime);
-//         }
-//         else if (values.charAt(i) == '1') {
-//           digitalWrite(ledPin, HIGH);
-//           delay(delayTime);
-//         }
-//       }
-//       else {
-//         // Turn off at the end
-//         if (values.charAt(i) == '0') {
-//           digitalWrite(ledPin, LOW);
-//           delay(delayTime);
-//         }
-//         else if (values.charAt(i) == '1') {
-//           digitalWrite(ledPin, HIGH);
-//           delay(delayTime);
-//           digitalWrite(ledPin, LOW);
-//         }
-//       }      
-//     }
-    
-//     // Reset variables
-//     values = "";
-//     stringValues = "";
-//     digitalWrite(led2Pin, LOW);
-//     shouldSend = false;
-//   }
-// }
+void vlc_sender_task( void* pvParameters ) {
+    sen::VLCSender* vlc_sender = static_cast<sen::VLCSender*>( pvParameters );
+
+    vlc_sender->run();
+    Serial.printf(
+        "== INFO == VLCSender task exited, deleting task and object" );
+
+    vTaskDelete( vlc_sender_task_handle );
+    delete vlc_sender;
+}
+
+void setup() {
+    Serial.begin( 19200 );
+    while ( !Serial ) {
+        ;
+    }
+    pinMode( 26, INPUT );
+    Serial.printf( "Creating VLC sender task\n" );
+
+    auto vlc_sender_task_return =
+        xTaskCreate( vlc_sender_task, "VLC_SENDER_RUN", 2000,
+                     (void*)&vlc_sender, 1, &vlc_sender_task_handle );
+    if ( vlc_sender_task_return != pdPASS ) {
+        vTaskDelete( vlc_sender_task_handle );
+        Serial.printf(
+            "== ERROR == Creating task for vlc_sender failed, error code = "
+            "%d\n",
+            vlc_sender_task_return );
+    }
+    Serial.printf( "== INFO == Created VLC Sender task in setup()\n" );
+}
+
+// 204, 51
+std::deque<uint8_t> bytes = { 0b11001100, 0b00110011 };
+
+void loop() {
+    Serial.printf( "address of vector in loop() : %d\n", &bytes );
+    if ( digitalRead( 26 ) == HIGH ) {
+        vlc_sender.sendBytes( bytes, false );
+        Serial.printf( "== MAIN == SENDING BYTES\n" );
+    } else {
+        Serial.printf( "== MAIN == original deque has size: %d\n",
+                       bytes.size() );
+    }
+    vTaskDelay( 1000 );
+}
