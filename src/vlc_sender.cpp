@@ -5,8 +5,7 @@ namespace sen {
 // public
 VLCSender::VLCSender( int led_pin, unsigned int frequency ) :
     frequency{ frequency }, led_pin{ led_pin }, bytes{},
-    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) },
-    this_task_handle{} {
+    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) } {
     pinMode( led_pin, OUTPUT );
     // bit delay in seconds
     if ( frequency <= 0 ) {
