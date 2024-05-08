@@ -18,11 +18,11 @@ public:
     // doesn't overwrite private variable by default, set update_freq to true to
     // overwrite
     void sendBytes( std::deque<uint8_t>& bytes, unsigned int freq,
-                    bool update_freq = false, bool overwrite_org = true);
+                    bool update_freq = false);
 
     // sendBytes method without frequency parameter
     // takes frequency from private variable
-    void sendBytes( std::deque<uint8_t>& bytes, bool overwrite_org = true);
+    void sendBytes( std::deque<uint8_t>& bytes);
 
     void setFrequency( unsigned int new_frequency );
     unsigned int getFrequency();
