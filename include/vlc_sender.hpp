@@ -34,12 +34,9 @@ private:
     int led_pin;
     std::deque<uint8_t>* bytes;
     xQueueHandle bytes_queue;
-    xTaskHandle this_task_handle;
     PinStatus pin_state;
 
     uint8_t generateChecksum( std::deque<uint8_t>& bytes );
-    void sendByte( uint8_t byte );
-    void sendBit( bool bit );
 
     enum class state_t { IDLE, SENDSYNC, SENDBYTE, SENDEND, SENDBIT };
 
