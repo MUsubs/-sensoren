@@ -5,7 +5,7 @@
 int led_pin = LED_BUILTIN;
 long set_freq = 0;
 
-sen::VLCSender vlc_sender = { led_pin, 4 };
+sen::VLCSender vlc_sender = { led_pin, 40 };
 xTaskHandle vlc_sender_task_handle;
 
 void vlc_sender_task( void* pvParameters ) {
@@ -21,6 +21,7 @@ void vlc_sender_task( void* pvParameters ) {
 
 void setup() {
     Serial.begin( 19200 );
+    // Require a serial connection to be formed, before continuing
     while ( !Serial ) {
         ;
     }
@@ -44,13 +45,10 @@ void setup() {
 std::deque<uint8_t> bytes = { 0b11001100, 0b00110011 };
 
 void loop() {
-    Serial.printf( "address of vector in loop() : %d\n", &bytes );
     if ( digitalRead( 26 ) == HIGH ) {
-        vlc_sender.sendBytes( bytes, false );
+        vlc_sender.sendBytes( bytes );
         Serial.printf( "== MAIN == SENDING BYTES\n" );
     } else {
-        Serial.printf( "== MAIN == original deque has size: %d\n",
-                       bytes.size() );
     }
     vTaskDelay( 1000 );
 }

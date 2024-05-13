@@ -5,8 +5,7 @@ namespace sen {
 // public
 VLCSender::VLCSender( int led_pin, unsigned int frequency ) :
     frequency{ frequency }, led_pin{ led_pin }, bytes{},
-    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) },
-    this_task_handle{} {
+    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) } {
     pinMode( led_pin, OUTPUT );
     // bit delay in seconds
     if ( frequency <= 0 ) {
@@ -18,20 +17,15 @@ VLCSender::VLCSender( int led_pin, unsigned int frequency ) :
 }
 
 void VLCSender::sendBytes( std::deque<uint8_t>& incoming_bytes,
-                           unsigned int freq, bool overwrite_org,
-                           bool update_freq ) {
+                           unsigned int freq, bool update_freq ) {
     if ( update_freq ) frequency = freq;
     std::deque<uint8_t>* send_bytes;
-    if ( overwrite_org ) {
-        send_bytes = &incoming_bytes;
-    } else {
-        send_bytes = new std::deque<uint8_t>{ incoming_bytes };
-    }
+    send_bytes = &incoming_bytes;
     xQueueSend( bytes_queue, (void*)&send_bytes, 0 );
 }
 
-void VLCSender::sendBytes( std::deque<uint8_t>& bytes, bool overwrite_org ) {
-    sendBytes( bytes, frequency, overwrite_org );
+void VLCSender::sendBytes( std::deque<uint8_t>& bytes ) {
+    sendBytes( bytes, frequency );
 }
 
 void VLCSender::setFrequency( unsigned int new_frequency ) {
@@ -48,6 +42,7 @@ void VLCSender::run() {
     unsigned long start;
     unsigned long end;
     unsigned int index;
+    unsigned int byte_amount;
     PinStatus pin_state;
 
     for ( ;; ) {
@@ -57,9 +52,8 @@ void VLCSender::run() {
                 if ( bytes_queue != NULL ) {
                     if ( xQueueReceive( bytes_queue, &bytes, 0 ) ) {
                         Serial.printf( "Message received from queue\n" );
-                        Serial.printf( "Address of vector in run() : %d\n",
-                                       bytes );
                         index = 0;
+                        byte_amount = bytes->size();
                         state = state_t::SENDSYNC;
                         Serial.printf( "Frequency = %d | Bit Delay = %lf\n",
                                        frequency, bit_delay );
@@ -70,7 +64,6 @@ void VLCSender::run() {
                 break;
             // state 1
             case state_t::SENDSYNC:
-
                 return_state = state_t::SENDSYNC;
                 if ( index < 8 ) {
                     pin_state = ( index % 2 == 0 ) ? HIGH : LOW;
@@ -86,10 +79,12 @@ void VLCSender::run() {
                 Serial.printf( "Entering SENDBYTE\n" );
                 if ( index >= 8 ) {
                     Serial.printf( "End of byte reached, Resetting index\n" );
+                    bytes->push_back( bytes->front() );
                     bytes->pop_front();
+                    byte_amount--;
                     index = 0;
                 }
-                if ( bytes->size() <= 0 || bytes->empty() ) {
+                if ( byte_amount <= 0 ) {
                     state = state_t::SENDEND;
                     break;
                 }
@@ -109,8 +104,8 @@ void VLCSender::run() {
             case state_t::SENDEND:
                 // set index to 42 for debugging purposes (this number shouldn't
                 // occur any other way)
+                Serial.printf("== INFO == All bytes succesfully sent\n");
                 index = 42;
-                delete bytes;
                 digitalWrite( led_pin, LOW );
                 return_state = state_t::IDLE;
                 state = state_t::IDLE;
