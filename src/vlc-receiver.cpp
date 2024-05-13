@@ -1,17 +1,33 @@
 #include "vlc-receiver.hpp"
 
+namespace rec {
 
-Receiver::Receiver()
-{
+VLCReceiver::VLCReceiver( int phot_pin, unsigned int frequency ) :
+    frequency{ frequency }, phot_pin{ phot_pin },
+    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) },
+    this_task_handle{} {
+
+    pinMode( phot_pin, OUTPUT );
+
+    if ( frequency <= 0 ) {
+    Serial.printf(
+        "== ERROR == frequency <= 0, setting it to 1 and continuing" );
+    frequency = 1;
+    }
+    bit_delay = 1.f / (float)frequency;
+
+    
+
+    measureAmbientLight();
     
 }
 
-void Receiver::pauseDetected(int pause)
+void VLCReceiver::pauseDetected(int pause)
 {
     // pausesChannel.write(pause);
 }
 
-bool Receiver::createMessage(uint16_t &message, int &pause)
+bool VLCReceiver::createMessage(uint16_t &message, int &pause)
 {
 
     for (unsigned int i = 0; i < 16; i++)
@@ -31,7 +47,7 @@ bool Receiver::createMessage(uint16_t &message, int &pause)
     return true;
 }
 
-bool Receiver::isValidCheckSum(const uint16_t &message)
+bool VLCReceiver::isValidCheckSum(const uint16_t &message)
 {
     unsigned int checkBitOne = 1;
     unsigned int checkBitTwo = 6;
@@ -53,7 +69,12 @@ bool Receiver::isValidCheckSum(const uint16_t &message)
     return true;
 }
 
-void Receiver::loop()
+void VLCReceiver::measureAmbientLight()
+{
+    low_threshold = digitalRead( phot_pin );
+}
+
+void VLCReceiver::run()
 {
     int pause;
     uint16_t firstMessage;
@@ -65,6 +86,21 @@ void Receiver::loop()
         switch (state)
         {
         case IDLE:
+
+            // wait(pausesChannel);
+
+            // pause = pausesChannel.read();
+
+            if (pause > 3500 && pause < 5000)
+            {
+                state = MESSAGE;
+            }
+
+            // wait_ms(200);
+
+            break;
+
+            case SYNC:
 
             // wait(pausesChannel);
 
@@ -128,3 +164,5 @@ void Receiver::loop()
         }
     }
 }
+
+} // namespace rec
