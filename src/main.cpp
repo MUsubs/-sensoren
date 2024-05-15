@@ -45,7 +45,7 @@ void setup() {
 std::deque<uint8_t> bytes = { 0b11001100, 0b00110011 };
 
 void loop() {
-    if ( digitalRead( 26 ) == HIGH ) {
+    if ( digitalRead( 7 ) == HIGH ) {
         vlc_sender.sendBytes( bytes );
         Serial.printf( "== MAIN == SENDING BYTES\n" );
     } else {
