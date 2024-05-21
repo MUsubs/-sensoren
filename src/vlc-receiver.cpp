@@ -1,10 +1,12 @@
 #include "vlc-receiver.hpp"
 
+#define QUEUE_LENGTH 20
+
 namespace rec {
 
 VLCReceiver::VLCReceiver( int phot_pin, unsigned int frequency ) :
     frequency{ frequency }, phot_pin{ phot_pin },
-    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) },
+    pause_queue{ xQueueCreate( QUEUE_LENGTH, sizeof(uint32_t) ) },
     this_task_handle{} {
 
     pinMode( phot_pin, OUTPUT );
@@ -15,71 +17,49 @@ VLCReceiver::VLCReceiver( int phot_pin, unsigned int frequency ) :
     frequency = 1;
     }
     bit_delay = 1.f / (float)frequency;
-
-    
-
-    measureAmbientLight();
     
 }
 
-void VLCReceiver::pauseDetected(int pause)
+void VLCReceiver::pauseDetected(uint32_t pause)
 {
-    // pausesChannel.write(pause);
+    uint32_t value = pause;
+    xQueueSend(pause_queue, &value, 0);
 }
 
-bool VLCReceiver::createMessage(uint16_t &message, int &pause)
-{
+// bool VLCReceiver::createMessage(uint16_t &message, int &pause)
+// {
 
-    for (unsigned int i = 0; i < 16; i++)
-    {
-        // pause = pausesChannel.read();
+//     for (unsigned int i = 0; i < 16; i++)
+//     {
+//         // pause = pausesChannel.read();
 
-        if (pause > 200 && pause < 2000)
-        {
-            message |= (((pause > 1000) ? 0 : 1) << i);
-        }
+//         if (pause > 200 && pause < 2000)
+//         {
+//             message |= (((pause > 1000) ? 0 : 1) << i);
+//         }
 
-        else if (pause > 3500 && pause < 5000)
-        {
-            return false;
-        }
-    }
-    return true;
-}
+//         else if (pause > 3500 && pause < 5000)
+//         {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
 
 bool VLCReceiver::isValidCheckSum(const uint16_t &message)
 {
-    unsigned int checkBitOne = 1;
-    unsigned int checkBitTwo = 6;
-    unsigned int checkBitThree = 11;
-
-    for (unsigned int i = 0; i < 5; i++)
-    {
-        if (((message >> checkBitThree) & 1) == (((message >> checkBitOne) & 1) ^ ((message >> checkBitTwo) & 1)))
-        {
-            checkBitThree++;
-            checkBitOne++;
-            checkBitTwo++;
-        }
-        else
-        {
-            return false;
-        }
-    }
+    // is it necessary to check if the massage is valid?
     return true;
 }
 
-void VLCReceiver::measureAmbientLight()
-{
-    low_threshold = digitalRead( phot_pin );
-}
 
 void VLCReceiver::run()
 {
-    int pause;
-    uint16_t firstMessage;
-    uint16_t secondMessage;
-    bool messageResult;
+    uint32_t pause = 0;
+    bool sync_confirmed = false;
+    uint8_t byte;
+    uint8_t message[10]; // temporary only 10 bytes long
+    unsigned int index = 0;
 
     for (;;)
     {
@@ -87,28 +67,46 @@ void VLCReceiver::run()
         {
         case IDLE:
 
-            // wait(pausesChannel);
-
-            // pause = pausesChannel.read();
-
-            if (pause > 3500 && pause < 5000)
-            {
-                state = MESSAGE;
+            if (pause_queue != NULL) {
+                if (xQueueReceive(pause_queue, &pause, 0))
+                {
+                    state = SYNC;
+                }
             }
 
-            // wait_ms(200);
+            delayMicroseconds(20000); // 200 ms
 
             break;
 
             case SYNC:
 
-            // wait(pausesChannel);
-
-            // pause = pausesChannel.read();
-
-            if (pause > 3500 && pause < 5000)
+            while (!sync_confirmed)
             {
-                state = MESSAGE;
+                
+                if (xQueueReceive(pause_queue, &pause, 0))
+                {
+                    
+                    if(pause == bit_delay)
+                    {
+                        // two bits: 0 and 1
+                    }
+                    else if (pause > 3500 && pause < 5000 && sync_confirmed)
+                    {
+                        // long pause to confirm that the sync byte is over
+                        // it should also be added in the sender!
+
+                        state = MESSAGE;
+                        break;
+                    }
+                    else if (pause == 0)
+                    {
+                        // false, sync byte does not contain 11
+                    }
+                }
+                else
+                {
+                    delayMicroseconds(bit_delay);
+                }
             }
 
             // wait_ms(200);
@@ -116,46 +114,28 @@ void VLCReceiver::run()
             break;
 
         case MESSAGE:
-            firstMessage = 0x0;
-            secondMessage = 0x0;
 
-            messageResult = createMessage(firstMessage, pause);
-            // logger.logInt(firstMessage);
-
-            // check first message
-            if (!messageResult)
+            if (xQueueReceive(pause_queue, &pause, 0))
             {
-                state = IDLE;
-                break;
-            }
+                
+                if(pause > bit_delay)
+                {
+                    // one or more zero's has been received
+                    // depends on how long pause is
+                    // paus / bit_dely = number_of_zero's
+                    // it's also always followd by 1
+                }
+                else if(pause = 0)
+                {
+                    // 1
+                }
 
-            // check checksum
-            if (!isValidCheckSum(firstMessage))
-            {
-                state = IDLE;
-                break;
-            }
+                // we need a way to determine the end of the byte!
 
-            // check pausebit
-            // pause = pausesChannel.read();
+                // we also need a way to determine that the massage has been ended, maybe a long pause?
 
-            if (!(pause > 2500 && pause < 3500))
-            {
-                state = IDLE;
-                break;
-            }
+                // at last we need to send the bytes to the main
 
-            // check second message
-            messageResult = createMessage(secondMessage, pause);
-            if (!messageResult)
-            {
-                state = IDLE;
-                break;
-            }
-
-            if (firstMessage == secondMessage)
-            {
-                // receiveIRController.sendMessage(firstMessage);
             }
 
             state = IDLE;

@@ -13,7 +13,7 @@ class PhotodiodeListener
 {
 
 public:
-	virtual void pauseDetected(int pause);
+	virtual void pauseDetected(uint32_t pause);
 };
 
 class Photodiode
@@ -46,7 +46,7 @@ private:
 	void main()
 	{
 
-		int n = 0;
+		uint n = 0;
 		PinStatus photo_signal;
 
 		for (;;)
@@ -81,7 +81,13 @@ private:
 
 				if (photo_signal)
 				{
+					for (auto &listener : PhotodiodeListenerArr)
+					{
+						listener->pauseDetected(0);
+					}
+					// wait bit delay, but how do i know what the bit delay is if i dont know what the frequecy is yet?
 					state = SIGNAL;
+
 				}
 				else if (!photo_signal)
 				{

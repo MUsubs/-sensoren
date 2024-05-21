@@ -14,10 +14,8 @@ class VLCReceiver : PhotodiodeListener{
 
 public:
     VLCReceiver( int phot_pin, unsigned int frequency = 60 );
-  
-    void measureAmbientLight();
 
-    void pauseDetected( int pause );
+    void pauseDetected( uint32_t pause );
 
     bool createMessage( uint16_t &message, int &pause );
 
@@ -29,8 +27,7 @@ private:
     int phot_pin;
     unsigned int frequency;
     double bit_delay;
-    std::deque<uint8_t>* bytes;
-    xQueueHandle bytes_queue;
+    xQueueHandle pause_queue;
     xTaskHandle this_task_handle;
     PinStatus pin_state; 
     int low_threshold;
