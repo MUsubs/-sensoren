@@ -123,6 +123,30 @@ void VLCSender::run() {
     }
 }
 
+// header is 8 bits, format = MSB | bytes amount : 5 | ID : 3 | LSB
+uint8_t VLCSender::generateHeader( uint8_t id, std::deque<uint8_t>& bytes ) {
+    if ( bytes.size() > 31 ) {
+        Serial.printf(
+            "== ERROR == Attempting to send %d bytes, maximum allowed number "
+            "is 31\n",
+            bytes.size() );
+        return 0;
+    }
+    if ( id > 7 ) {
+        Serial.printf(
+            "== ERROR == Attempting to send ID of %d, ID should be in range "
+            "0-7 (inclusive)",
+            id );
+        return 0;
+    }
+
+    uint8_t header = 0;
+    header |= (uint8_t)bytes.size();
+    header <<= 3;
+    header |= id;
+    return header;
+}
+
 // private
 uint8_t VLCSender::generateChecksum( std::deque<uint8_t>& bytes ) {
     uint8_t result = 0;

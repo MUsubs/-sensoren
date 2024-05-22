@@ -14,12 +14,17 @@ namespace sen {
 
 class VLCSenderTest {
 public:
-    VLCSenderTest( VLCSender& vlc_sender );
+    VLCSenderTest( VLCSender& vlc_sender, int status_led_pin );
 
-    void start();
+    void start( bool generate_headers = false );
 
 private:
     VLCSender& vlc_sender;
+    int status_led_pin;
+
+    void statusError();
+    void statusSending();
+    void statusReady();
 };
 
 }  // namespace sen
