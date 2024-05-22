@@ -1,148 +1,118 @@
 #include "vlc-receiver.hpp"
 
-#define QUEUE_LENGTH 20
+#define QUEUE_LENGTH 32
 
 namespace rec {
 
-VLCReceiver::VLCReceiver( int phot_pin, unsigned int frequency ) :
-    frequency{ frequency }, phot_pin{ phot_pin },
-    pause_queue{ xQueueCreate( QUEUE_LENGTH, sizeof(uint32_t) ) },
+VLCReceiver::VLCReceiver( unsigned int frequency ) :
+    frequency{ frequency },
+    pulse_length_queue{ xQueueCreate( QUEUE_LENGTH, sizeof( double ) ) },
     this_task_handle{} {
-
-    pinMode( phot_pin, OUTPUT );
-
     if ( frequency <= 0 ) {
-    Serial.printf(
-        "== ERROR == frequency <= 0, setting it to 1 and continuing" );
-    frequency = 1;
+        Serial.printf(
+            "== ERROR == frequency <= 0, setting it to 1 and continuing" );
+        frequency = 1;
     }
     bit_delay = 1.f / (float)frequency;
-    
 }
 
-void VLCReceiver::pauseDetected(uint32_t pause)
-{
-    uint32_t value = pause;
-    xQueueSend(pause_queue, &value, 0);
+void VLCReceiver::pulseDetected( double pulse_length ) {
+    double value = pulse_length;
+    xQueueSend( pulse_length_queue, &value, 0 );
 }
 
-// bool VLCReceiver::createMessage(uint16_t &message, int &pause)
-// {
+bool VLCReceiver::readHeader( uint8_t &header, double &pulse_length ) {
+    for ( unsigned int i = 0; i < 8; i++ ) {
+        if ( pulse_length > ( ( bit_delay / 2 ) + 0.003 ) &&
+             pulse_length <= ( bit_delay + 0.003 ) ) {
+            header |= 1;
+            header <<= 1;
 
-//     for (unsigned int i = 0; i < 16; i++)
-//     {
-//         // pause = pausesChannel.read();
+        } else if ( pulse_length > 0 &&
+                    pulse_length < ( ( bit_delay / 2 ) + 0.003 ) ) {
+            header |= 0;
+            header <<= 1;
+        }
 
-//         if (pause > 200 && pause < 2000)
-//         {
-//             message |= (((pause > 1000) ? 0 : 1) << i);
-//         }
+        if (i >= 7) return true;
+        if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
+            return false;
+        }
+    }
+    return true;
+}
 
-//         else if (pause > 3500 && pause < 5000)
-//         {
-//             return false;
-//         }
-//     }
-//     return true;
-// }
+bool VLCReceiver::readByte( uint8_t &message, double &pulse_length ) {
+    for ( unsigned int i = 0; i < 8; i++ ) {
+        if ( pulse_length > ( ( bit_delay / 2 ) + 0.003 ) &&
+             pulse_length <= ( bit_delay + 0.003 ) ) {
+            message |= 1;
+            message <<= 1;
 
-bool VLCReceiver::isValidCheckSum(const uint16_t &message)
-{
+        } else if ( pulse_length > 0 &&
+                    pulse_length < ( ( bit_delay / 2 ) + 0.003 ) ) {
+            message <<= 1;
+        }
+
+        if (i >= 7) return true;
+        if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool VLCReceiver::isValidCheckSum( const uint16_t &message ) {
     // is it necessary to check if the massage is valid?
     return true;
 }
 
-
-void VLCReceiver::run()
-{
-    uint32_t pause = 0;
-    bool sync_confirmed = false;
-    uint8_t byte;
-    uint8_t message[10]; // temporary only 10 bytes long
+void VLCReceiver::run() {
+    double pulse_length = 0;
     unsigned int index = 0;
 
-    for (;;)
-    {
-        switch (state)
-        {
-        case IDLE:
+    uint8_t header = 0;
+    uint8_t byte = 0;
 
-            if (pause_queue != NULL) {
-                if (xQueueReceive(pause_queue, &pause, 0))
-                {
-                    state = SYNC;
-                }
-            }
+    uint8_t message[10];  // temporary only 10 bytes long
 
-            delayMicroseconds(20000); // 200 ms
+    for ( ;; ) {
+        switch ( state ) {
+            case IDLE:
 
-            break;
-
-            case SYNC:
-
-            while (!sync_confirmed)
-            {
-                
-                if (xQueueReceive(pause_queue, &pause, 0))
-                {
-                    
-                    if(pause == bit_delay)
-                    {
-                        // two bits: 0 and 1
-                    }
-                    else if (pause > 3500 && pause < 5000 && sync_confirmed)
-                    {
-                        // long pause to confirm that the sync byte is over
-                        // it should also be added in the sender!
-
-                        state = MESSAGE;
-                        break;
-                    }
-                    else if (pause == 0)
-                    {
-                        // false, sync byte does not contain 11
+                if ( pulse_length_queue != NULL ) {
+                    if ( xQueueReceive( pulse_length_queue, &pulse_length,
+                                        0 ) ) {
+                        state = HEADER;
                     }
                 }
-                else
-                {
-                    delayMicroseconds(bit_delay);
-                }
-            }
 
-            // wait_ms(200);
+                break;
 
-            break;
+            case HEADER:
 
-        case MESSAGE:
+                readHeader( header, pulse_length );
 
-            if (xQueueReceive(pause_queue, &pause, 0))
-            {
-                
-                if(pause > bit_delay)
-                {
-                    // one or more zero's has been received
-                    // depends on how long pause is
-                    // paus / bit_dely = number_of_zero's
-                    // it's also always followd by 1
-                }
-                else if(pause = 0)
-                {
-                    // 1
+                state = MESSAGE;
+
+                break;
+
+            case MESSAGE:
+
+                if ( xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
+                    readByte( byte, pulse_length );
                 }
 
-                // we need a way to determine the end of the byte!
+                message[0] = byte;
 
-                // we also need a way to determine that the massage has been ended, maybe a long pause?
+                byte = 0;
+                header = 0;
 
-                // at last we need to send the bytes to the main
+                state = IDLE;
 
-            }
-
-            state = IDLE;
-
-            break;
+                break;
         }
     }
 }
 
-} // namespace rec
+}  // namespace rec
