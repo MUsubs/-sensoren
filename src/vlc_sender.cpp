@@ -5,7 +5,8 @@ namespace sen {
 // public
 VLCSender::VLCSender( int led_pin, unsigned int frequency ) :
     frequency{ frequency }, led_pin{ led_pin }, bytes{},
-    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) } {
+    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) },
+    bit_state{ false } {
     pinMode( led_pin, OUTPUT );
     // bit delay in seconds
     if ( frequency <= 0 ) {
@@ -54,7 +55,7 @@ void VLCSender::run() {
                         Serial.printf( "Message received from queue\n" );
                         index = 0;
                         byte_amount = bytes->size();
-                        state = state_t::SENDSYNC;
+                        state = state_t::SENDBYTE;
                         Serial.printf( "Frequency = %d | Bit Delay = %lf\n",
                                        frequency, bit_delay );
                     }
@@ -63,18 +64,6 @@ void VLCSender::run() {
                 }
                 break;
             // state 1
-            case state_t::SENDSYNC:
-                return_state = state_t::SENDSYNC;
-                if ( index < 8 ) {
-                    pin_state = ( index % 2 == 0 ) ? HIGH : LOW;
-                    index++;
-                    state = state_t::SENDBIT;
-                } else {
-                    index = 0;
-                    state = state_t::SENDBYTE;
-                }
-                break;
-            // state 2
             case state_t::SENDBYTE:
                 Serial.printf( "Entering SENDBYTE\n" );
                 if ( index >= 8 ) {
@@ -100,27 +89,31 @@ void VLCSender::run() {
                 index++;
                 state = state_t::SENDBIT;
                 break;
-            // state 3
+            // state 2
             case state_t::SENDEND:
                 // set index to 42 for debugging purposes (this number shouldn't
                 // occur any other way)
-                Serial.printf("== INFO == All bytes succesfully sent\n");
-                index = 42;
+                Serial.printf( "== INFO == All bytes sent\n" );
                 digitalWrite( led_pin, LOW );
+                index = 42;
+                byte_amount = 0;
                 return_state = state_t::IDLE;
                 state = state_t::IDLE;
                 break;
-            // state 4
+            // state 3
             case state_t::SENDBIT:
                 start = micros();
-                end = start + bit_delay * 1'000'000;
-                // technically this blocking loop isn't allowed
-                // for testing sake, I'm keeping it in for now (as of 24 apr)
-                // if this becomes the final communication protocol,
-                // the loop will be subsituted with states
-                while ( micros() <= end ) {
-                    digitalWrite( led_pin, pin_state );
+                if ( pin_state == HIGH ) {
+                    end = start + bit_delay * 1'000'000;
+                } else {
+                    end = start + bit_delay * 500'000;
                 }
+                while ( micros() <= end ) {
+                    digitalWrite( led_pin, HIGH );
+                }
+                digitalWrite( led_pin, LOW );
+                end = micros() + bit_delay * 500'000;
+                while ( micros() <= end );
                 state = return_state;
                 break;
             default:
@@ -128,6 +121,30 @@ void VLCSender::run() {
                 break;
         }
     }
+}
+
+// header is 8 bits, format = MSB | bytes amount : 5 | ID : 3 | LSB
+uint8_t VLCSender::generateHeader( uint8_t id, std::deque<uint8_t>& bytes ) {
+    if ( bytes.size() > 31 ) {
+        Serial.printf(
+            "== ERROR == Attempting to send %d bytes, maximum allowed number "
+            "is 31\n",
+            bytes.size() );
+        return 0;
+    }
+    if ( id > 7 ) {
+        Serial.printf(
+            "== ERROR == Attempting to send ID of %d, ID should be in range "
+            "0-7 (inclusive)",
+            id );
+        return 0;
+    }
+
+    uint8_t header = 0;
+    header |= (uint8_t)bytes.size();
+    header <<= 3;
+    header |= id;
+    return header;
 }
 
 // private
