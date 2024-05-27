@@ -10,6 +10,8 @@
 
 namespace sen {
 
+#define PWM_HIGH 50
+
 class VLCSender {
 public:
     VLCSender( int led_pin, unsigned int frequency = 60 );
@@ -36,7 +38,6 @@ private:
     int led_pin;
     std::deque<uint8_t>* bytes;
     xQueueHandle bytes_queue;
-    bool bit_state;
 
     uint8_t generateChecksum( std::deque<uint8_t>& bytes );
 
