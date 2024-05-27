@@ -13,7 +13,7 @@ namespace rec {
 
 class VLCReceiver : PhotodiodeListener {
 public:
-    VLCReceiver( unsigned int frequency = 60 );
+    VLCReceiver( unsigned int frequency = 60, VLCReceiverTest &test );
 
     void pulseDetected( double pulse_length );
 
@@ -38,6 +38,8 @@ private:
     enum state_t { IDLE, HEADER, MESSAGE };
 
     state_t state = IDLE;
+
+    VLCReceiverTest test;
 };
 
 }  // namespace rec

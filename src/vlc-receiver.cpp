@@ -1,10 +1,11 @@
 #include "vlc-receiver.hpp"
+#include "vlc_sender.hpp"
 
 #define QUEUE_LENGTH 32
 
 namespace rec {
 
-VLCReceiver::VLCReceiver( unsigned int frequency ) :
+VLCReceiver::VLCReceiver( unsigned int frequency, VLCReceiverTest &test ) :
     frequency{ frequency },
     pulse_length_queue{ xQueueCreate( QUEUE_LENGTH, sizeof( double ) ) },
     this_task_handle{} {
