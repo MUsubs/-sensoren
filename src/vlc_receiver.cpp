@@ -1,5 +1,6 @@
-#include "vlc-receiver.hpp"
+#include "vlc_receiver.hpp"
 #include "vlc_sender.hpp"
+#include "vlc_receiver_test.hpp"
 
 #define QUEUE_LENGTH 32
 
