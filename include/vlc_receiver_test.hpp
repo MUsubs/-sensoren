@@ -8,7 +8,7 @@
 
 #include "FreeRTOS.h"
 #include "test_bytes.hpp"
-#include "vlc-receiver.hpp"
+#include "vlc_receiver.hpp"
 
 namespace rec {
 
