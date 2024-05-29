@@ -6,7 +6,7 @@ VLCReceiverTest::VLCReceiverTest() :
     byte_queue{ xQueueCreate( 32, sizeof( uint8_t ) ) }, this_task_handle{} {
 }
 
-void VLCReceiverTest::byteReceived( uint8_t &byte, uint &index ) {
+void VLCReceiverTest::byteReceived( uint8_t &byte) {
     uint8_t value = byte;
     xQueueSend( byte_queue, &value, 0 );
 }
@@ -14,13 +14,12 @@ void VLCReceiverTest::byteReceived( uint8_t &byte, uint &index ) {
 void VLCReceiverTest::printResults( uint32_t &result ) {
     // Create a mask with the highest bit set
     uint32_t mask = 1UL << 31;
-
     Serial.print( "Test Results : " );
 
     // Iterate through each bit
     for ( int i = 0; i < 32; i++ ) {
         // Check if the current bit is set and print '1' or '0'
-        if ( number & mask ) {
+        if ( result & mask ) {
             Serial.print( '1' );
         } else {
             Serial.print( '0' );
@@ -47,7 +46,7 @@ void VLCReceiverTest::run() {
 
             case BYTE:
                 if ( index >= 0 && index < 32 ) {
-                    if ( received_byte == test_bytes[index] ) {
+                    if ( received_byte == sen::test_bytes[index] ) {
                         result |= 1;
                         result <<= 1;
                     } else {
@@ -57,7 +56,7 @@ void VLCReceiverTest::run() {
                     state = IDLE;
                 }
                 if ( index >= 32 ) {
-                    state = RESULTS
+                    state = RESULTS;
                 }
 
                 break;

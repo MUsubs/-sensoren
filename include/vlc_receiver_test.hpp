@@ -8,15 +8,15 @@
 
 #include "FreeRTOS.h"
 #include "test_bytes.hpp"
-#include "vlc_receiver.hpp"
+#include "vlc-receiver.hpp"
 
 namespace rec {
 
-class VLCReceiverTest {
+class VLCReceiverTest : ReceiverListener {
 public:
     VLCReceiverTest();
 
-    void byteReceived( uint8_t &byte, uint &index );
+    void byteReceived( uint8_t &byte);
 
     void printResults( uint32_t &result );
 

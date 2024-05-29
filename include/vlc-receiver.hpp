@@ -11,9 +11,16 @@
 
 namespace rec {
 
+class ReceiverListener {
+public:
+    virtual void ByteReceived( uint8_t byte );
+};
+
 class VLCReceiver : PhotodiodeListener {
 public:
-    VLCReceiver( unsigned int frequency = 60, VLCReceiverTest &test );
+    VLCReceiver( unsigned int frequency = 60);
+
+    void addListener( ReceiverListener *listener );
 
     void pulseDetected( double pulse_length );
 
@@ -39,7 +46,10 @@ private:
 
     state_t state = IDLE;
 
-    VLCReceiverTest test;
+    static const unsigned int maxNumberOfListeners = 1;
+
+    std::array<ReceiverListener *, maxNumberOfListeners> ReceiverListenerArr;
+    unsigned int currentNumberOfListeners = 0;
 };
 
 }  // namespace rec
