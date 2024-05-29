@@ -1,19 +1,11 @@
 #include "vlc-receiver.hpp"
-
 #include "vlc_sender.hpp"
 
 #define QUEUE_LENGTH 32
 
 namespace rec {
 
-void VLCReceiver::addListener( ReceiverListener *listener ) {
-    if ( currentNumberOfListeners < maxNumberOfListeners ) {
-        ReceiverListenerArr[currentNumberOfListeners] = listener;
-        currentNumberOfListeners++;
-    }
-}
-
-VLCReceiver::VLCReceiver( unsigned int frequency) :
+VLCReceiver::VLCReceiver( unsigned int frequency, VLCReceiverTest &test ) :
     frequency{ frequency },
     pulse_length_queue{ xQueueCreate( QUEUE_LENGTH, sizeof( double ) ) },
     this_task_handle{} {
@@ -43,7 +35,7 @@ bool VLCReceiver::readHeader( uint8_t &header, double &pulse_length ) {
             header <<= 1;
         }
 
-        if ( i >= 7 ) return true;
+        if (i >= 7) return true;
         if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
             return false;
         }
@@ -63,7 +55,7 @@ bool VLCReceiver::readByte( uint8_t &message, double &pulse_length ) {
             message <<= 1;
         }
 
-        if ( i >= 7 ) return true;
+        if (i >= 7) return true;
         if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
             return false;
         }

@@ -5,8 +5,7 @@ namespace sen {
 // public
 VLCSender::VLCSender( int led_pin, unsigned int frequency ) :
     frequency{ frequency }, led_pin{ led_pin }, bytes{},
-    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) },
-    bit_state{ false } {
+    bytes_queue{ xQueueCreate( 10, sizeof( std::deque<uint8_t>* ) ) } {
     pinMode( led_pin, OUTPUT );
     // bit delay in seconds
     if ( frequency <= 0 ) {
@@ -44,7 +43,7 @@ void VLCSender::run() {
     unsigned long end;
     unsigned int index;
     unsigned int byte_amount;
-    PinStatus pin_state;
+    bool bit_state;
 
     for ( ;; ) {
         switch ( state ) {
@@ -84,8 +83,8 @@ void VLCSender::run() {
                     Serial.printf( "Current byte value : %d\n",
                                    bytes->front() );
                 Serial.printf( "Index is %d\n", index );
-                pin_state = ( bytes->front() & ( 0x80 >> index ) ) ? HIGH : LOW;
-                Serial.printf( "Pin state is %d\n", pin_state );
+                bit_state = ( bytes->front() & ( 0x80 >> index ) ) ? true : false;
+                Serial.printf( "Pin state is %d\n", bit_state );
                 index++;
                 state = state_t::SENDBIT;
                 break;
@@ -103,13 +102,15 @@ void VLCSender::run() {
             // state 3
             case state_t::SENDBIT:
                 start = micros();
-                if ( pin_state == HIGH ) {
+                if ( bit_state ) {
                     end = start + bit_delay * 1'000'000;
                 } else {
                     end = start + bit_delay * 500'000;
                 }
                 while ( micros() <= end ) {
-                    digitalWrite( led_pin, HIGH );
+                    analogWriteFreq(38000);
+                    analogWrite( led_pin, PWM_HIGH );
+                    analogWriteFreq(1000);
                 }
                 digitalWrite( led_pin, LOW );
                 end = micros() + bit_delay * 500'000;
