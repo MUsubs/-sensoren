@@ -18,7 +18,7 @@ public:
 
 class VLCReceiver : PhotodiodeListener {
 public:
-    VLCReceiver( unsigned int frequency = 60);
+    VLCReceiver( Photodiode &photodiode, unsigned int frequency = 60 );
 
     void addListener( ReceiverListener *listener );
 
@@ -41,6 +41,8 @@ private:
     PinStatus pin_state;
     int low_threshold;
     int high_threshold;
+
+    Photodiode &photodiode;
 
     enum state_t { IDLE, HEADER, MESSAGE };
 

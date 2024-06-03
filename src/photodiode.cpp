@@ -1,5 +1,7 @@
 #include "photodiode.hpp"
 
+namespace rec {
+
 void Photodiode::addListener( PhotodiodeListener *listener ) {
     if ( currentNumberOfListeners < maxNumberOfListeners ) {
         PhotodiodeListenerArr[currentNumberOfListeners] = listener;
@@ -70,3 +72,5 @@ void Photodiode::main() {
         }
     }
 }
+
+}  // namespace rec

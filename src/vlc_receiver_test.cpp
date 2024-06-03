@@ -2,11 +2,15 @@
 
 namespace rec {
 
-VLCReceiverTest::VLCReceiverTest() :
-    byte_queue{ xQueueCreate( 32, sizeof( uint8_t ) ) }, this_task_handle{} {
+VLCReceiverTest::VLCReceiverTest( VLCReceiver &vlc_receiver ) :
+    vlc_receiver{ vlc_receiver },
+    byte_queue{ xQueueCreate( 32, sizeof( uint8_t ) ) },
+    this_task_handle{} {
+
+        vlc_receiver.addListener(this);
 }
 
-void VLCReceiverTest::byteReceived( uint8_t &byte) {
+void VLCReceiverTest::byteReceived( uint8_t &byte ) {
     uint8_t value = byte;
     xQueueSend( byte_queue, &value, 0 );
 }

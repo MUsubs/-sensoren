@@ -14,9 +14,9 @@ namespace rec {
 
 class VLCReceiverTest : ReceiverListener {
 public:
-    VLCReceiverTest();
+    VLCReceiverTest(VLCReceiver &vlc_receiver);
 
-    void byteReceived( uint8_t &byte);
+    void byteReceived( uint8_t &byte );
 
     void printResults( uint32_t &result );
 
@@ -25,6 +25,8 @@ public:
 private:
     xQueueHandle byte_queue;
     xTaskHandle this_task_handle;
+
+    VLCReceiver &vlc_receiver;
 
     enum state_t { IDLE, BYTE, RESULTS };
 

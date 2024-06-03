@@ -9,6 +9,8 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+namespace rec {
+
 class PhotodiodeListener {
 public:
     virtual void pulseDetected( double pulse_length );
@@ -39,5 +41,7 @@ private:
 
     void main();
 };
+
+}  // namespace rec
 
 #endif  // PHOTODIODE_HPP

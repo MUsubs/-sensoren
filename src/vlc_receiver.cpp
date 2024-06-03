@@ -1,5 +1,4 @@
 #include "vlc_receiver.hpp"
-#include "vlc_sender.hpp"
 
 #define QUEUE_LENGTH 32
 
@@ -12,7 +11,8 @@ void VLCReceiver::addListener( ReceiverListener *listener ) {
     }
 }
 
-VLCReceiver::VLCReceiver( unsigned int frequency) :
+VLCReceiver::VLCReceiver( Photodiode &photodiode, unsigned int frequency ) :
+    photodiode{ photodiode },
     frequency{ frequency },
     pulse_length_queue{ xQueueCreate( QUEUE_LENGTH, sizeof( double ) ) },
     this_task_handle{} {
@@ -22,6 +22,8 @@ VLCReceiver::VLCReceiver( unsigned int frequency) :
         frequency = 1;
     }
     bit_delay = 1.f / (float)frequency;
+
+    photodiode.addListener(this);
 }
 
 void VLCReceiver::pulseDetected( double pulse_length ) {
