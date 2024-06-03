@@ -10,7 +10,7 @@
 
 namespace sen {
 
-#define PWM_HIGH 50
+#define PWM_HIGH 127
 
 class VLCSender {
 public:

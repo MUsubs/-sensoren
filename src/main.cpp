@@ -11,7 +11,7 @@ int photo_pin;
 int led_pin = LED_BUILTIN;
 long set_freq = 0;
 
-sen::VLCSender vlc_sender = { led_pin, 40 };
+sen::VLCSender vlc_sender = { led_pin, 1 };
 xTaskHandle vlc_sender_task_handle;
 
 rec::Photodiode photodiode = { photo_pin, frequency };
