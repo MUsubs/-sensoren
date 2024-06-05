@@ -14,6 +14,7 @@ namespace rec {
 class PhotodiodeListener {
 public:
     virtual void pulseDetected( double pulse_length );
+    virtual void resetQueue();
 };
 
 class Photodiode {
@@ -22,6 +23,8 @@ public:
 
     void addListener( PhotodiodeListener *listener );
 
+    void run();
+     
 private:
     static const unsigned int maxNumberOfListeners = 1;
 
@@ -39,7 +42,7 @@ private:
     enum state_t { IDLE, SIGNAL };
     state_t state = IDLE;
 
-    void main();
+    uint16_t low_threshold = 0;
 };
 
 }  // namespace rec

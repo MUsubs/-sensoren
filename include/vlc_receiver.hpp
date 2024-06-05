@@ -13,7 +13,7 @@ namespace rec {
 
 class ReceiverListener {
 public:
-    virtual void ByteReceived( uint8_t byte );
+    virtual void byteReceived( uint8_t& byte ) = 0;
 };
 
 class VLCReceiver : PhotodiodeListener {
@@ -22,7 +22,9 @@ public:
 
     void addListener( ReceiverListener *listener );
 
-    void pulseDetected( double pulse_length );
+    void pulseDetected( double pulse_length ) override;
+
+    void resetQueue() override;
 
     bool readByte( uint8_t &message, double &pulse_length );
 

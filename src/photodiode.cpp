@@ -19,16 +19,23 @@ Photodiode::Photodiode( int phot_pin, unsigned int frequency ) :
         frequency = 1;
     }
     bit_delay = 1.f / (float)frequency;
+
+    low_threshold = analogRead( phot_pin )-100;
 }
 
-void Photodiode::main() {
+void Photodiode::run() {
     double pulse_length = 0;
     PinStatus photo_signal;
+    uint16_t photo_value = 0;
     unsigned long start;
     unsigned long end;
 
+    double reset_clock = 0;
+
     for ( ;; ) {
+        // Serial.printf("signal = %d\n", photo_value);
         switch ( state ) {
+            
             case IDLE:
 
                 start = micros();
@@ -37,17 +44,34 @@ void Photodiode::main() {
                 while ( micros() <= end ) {
                     ;
                 }
+                reset_clock += 1.0 / 1000.0;
+                // Serial.printf("Reset clock in Photodiode = %lf\n", reset_clock);
+                if(reset_clock >= 2){
+                    for (auto &listener : PhotodiodeListenerArr) {
+                        listener->resetQueue();
+                    }
 
-                photo_signal = digitalRead( phot_pin );
+                    reset_clock = 0;
+                }
 
-                if ( photo_signal ) {
+                // photo_signal = digitalRead( phot_pin );
+
+                // if ( photo_signal ) {
+                //     state = SIGNAL;
+                // }
+
+                photo_value = analogRead( phot_pin );
+                // Serial.printf( "low_threshold : %d\n", low_threshold );
+                // Serial.printf( "photo_value : %d\n", photo_value );
+
+                if ( photo_value < low_threshold ) {
                     state = SIGNAL;
+                    Serial.println("STATE = SIGNAL");
                 }
 
                 break;
 
             case SIGNAL:
-
                 start = micros();
                 end = start + main_clock_us;
 
@@ -55,16 +79,33 @@ void Photodiode::main() {
                     ;
                 }
 
-                photo_signal = digitalRead( phot_pin );
+                // photo_signal = digitalRead( phot_pin );
 
-                if ( photo_signal ) {
-                    pulse_length += 1 / 1000;
+                // if ( photo_signal ) {
+                //     pulse_length += 1 / 1000;
+                // } else {
+                //     for ( auto &listener : PhotodiodeListenerArr ) {
+                //         listener->pulseDetected( pulse_length );
+                //     }
+
+                //     pulse_length = 0;
+                //     state = IDLE;
+                // }
+
+                photo_value = analogRead( phot_pin );
+                // Serial.printf( "low_threshold : %d\n", low_threshold );
+                // Serial.printf( "photo_value : %d\n", photo_value );
+
+                if ( photo_value < low_threshold ) {
+                    pulse_length += 1.0 / 1000.0;
                 } else {
+                    Serial.printf("Pulse length sent = %lf\n", pulse_length);
                     for ( auto &listener : PhotodiodeListenerArr ) {
                         listener->pulseDetected( pulse_length );
                     }
 
                     pulse_length = 0;
+                    reset_clock = 0;
                     state = IDLE;
                 }
 

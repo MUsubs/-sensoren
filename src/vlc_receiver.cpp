@@ -11,6 +11,11 @@ void VLCReceiver::addListener( ReceiverListener *listener ) {
     }
 }
 
+void VLCReceiver::resetQueue(){
+    Serial.println("Resetting pulse length queue");
+    xQueueReset(pulse_length_queue);
+}
+
 VLCReceiver::VLCReceiver( Photodiode &photodiode, unsigned int frequency ) :
     photodiode{ photodiode },
     frequency{ frequency },
@@ -23,7 +28,7 @@ VLCReceiver::VLCReceiver( Photodiode &photodiode, unsigned int frequency ) :
     }
     bit_delay = 1.f / (float)frequency;
 
-    photodiode.addListener(this);
+    photodiode.addListener( this );
 }
 
 void VLCReceiver::pulseDetected( double pulse_length ) {
@@ -54,6 +59,10 @@ bool VLCReceiver::readHeader( uint8_t &header, double &pulse_length ) {
 
 bool VLCReceiver::readByte( uint8_t &message, double &pulse_length ) {
     for ( unsigned int i = 0; i < 8; i++ ) {
+        if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
+            return false;
+        }
+
         if ( pulse_length > ( ( bit_delay / 2 ) + 0.003 ) &&
              pulse_length <= ( bit_delay + 0.003 ) ) {
             message |= 1;
@@ -62,11 +71,6 @@ bool VLCReceiver::readByte( uint8_t &message, double &pulse_length ) {
         } else if ( pulse_length > 0 &&
                     pulse_length < ( ( bit_delay / 2 ) + 0.003 ) ) {
             message <<= 1;
-        }
-
-        if ( i >= 7 ) return true;
-        if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
-            return false;
         }
     }
     return true;
@@ -84,16 +88,13 @@ void VLCReceiver::run() {
     uint8_t header = 0;
     uint8_t byte = 0;
 
-    uint8_t message[10];  // temporary only 10 bytes long
-
     for ( ;; ) {
         switch ( state ) {
             case IDLE:
 
                 if ( pulse_length_queue != NULL ) {
-                    if ( xQueueReceive( pulse_length_queue, &pulse_length,
-                                        0 ) ) {
-                        state = HEADER;
+                    if ( uxQueueMessagesWaiting( pulse_length_queue ) >= 8 ) {
+                        state = MESSAGE;
                     }
                 }
 
@@ -109,11 +110,11 @@ void VLCReceiver::run() {
 
             case MESSAGE:
 
-                if ( xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
-                    readByte( byte, pulse_length );
-                }
+                readByte( byte, pulse_length );
 
-                message[0] = byte;
+                for ( auto &listener : ReceiverListenerArr ) {
+                    listener->byteReceived( byte );
+                }
 
                 byte = 0;
                 header = 0;

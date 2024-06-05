@@ -16,7 +16,7 @@ class VLCReceiverTest : ReceiverListener {
 public:
     VLCReceiverTest(VLCReceiver &vlc_receiver);
 
-    void byteReceived( uint8_t &byte );
+    void byteReceived( uint8_t &byte ) override;
 
     void printResults( uint32_t &result );
 
