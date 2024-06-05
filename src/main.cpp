@@ -5,8 +5,7 @@
 #include "vlc_receiver_test.hpp"
 #include "vlc_sender.hpp"
 
-unsigned int frequency = 4;
-int photo_pin = 26;
+int photo_pin;
 
 int led_pin = 3;
 unsigned int set_freq = 4;
@@ -121,19 +120,19 @@ void setup() {
         ;
     }
     pinMode( 26, INPUT );
-    // Serial.printf( "Creating VLC sender task\n" );
+    Serial.printf( "Creating VLC sender task\n" );
 
-    // auto vlc_sender_task_return =
-    //     xTaskCreate( vlc_sender_task, "VLC_SENDER_RUN", 2000,
-    //                  (void*)&vlc_sender, 1, &vlc_sender_task_handle );
-    // if ( vlc_sender_task_return != pdPASS ) {
-    //     vTaskDelete( vlc_sender_task_handle );
-    //     Serial.printf(
-    //         "== ERROR == Creating task for vlc_sender failed, error code = "
-    //         "%d\n",
-    //         vlc_sender_task_return );
-    // }
-    // Serial.printf( "== INFO == Created VLC Sender task in setup()\n" );
+    auto vlc_sender_task_return =
+        xTaskCreate( vlc_sender_task, "VLC_SENDER_RUN", 2000,
+                     (void*)&vlc_sender, 1, &vlc_sender_task_handle );
+    if ( vlc_sender_task_return != pdPASS ) {
+        vTaskDelete( vlc_sender_task_handle );
+        Serial.printf(
+            "== ERROR == Creating task for vlc_sender failed, error code = "
+            "%d\n",
+            vlc_sender_task_return );
+    }
+    Serial.printf( "== INFO == Created VLC Sender task in setup()\n" );
 
     // bool result = CreatReceiverTasks();
 
@@ -148,10 +147,10 @@ void setup() {
 std::deque<uint8_t> bytes = { 0b11001100, 0b00110011 };
 
 void loop() {
-    // if ( digitalRead( 7 ) == HIGH ) {
-    //     vlc_sender.sendBytes( bytes );
-    //     Serial.printf( "== MAIN == SENDING BYTES\n" );
-    // } else {
-    // }
-    // vTaskDelay( 1000 );
+    if ( digitalRead( 7 ) == HIGH ) {
+        vlc_sender.sendBytes( bytes );
+        Serial.printf( "== MAIN == SENDING BYTES\n" );
+    } else {
+    }
+    vTaskDelay( 1000 );
 }
