@@ -2,10 +2,9 @@
 
 namespace sen {
 
-VLCSenderTest::VLCSenderTest( VLCSender& vlc_sender, int status_led_pin ) :
-    vlc_sender{ vlc_sender }, status_led_pin{ status_led_pin } {
-    pinMode( status_led_pin, OUTPUT );
-}
+VLCSenderTest::VLCSenderTest( int led_pin, unsigned int frequency ) :
+    vlc_sender{VLCSender{led_pin, frequency}}
+{}
 
 void VLCSenderTest::start( bool generate_headers ) {
     std::deque<uint8_t> byte;
