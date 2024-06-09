@@ -109,10 +109,13 @@ void VLCSender::run() {
                 }
                 while ( micros() <= end ) {
                     digitalWrite( led_pin, HIGH );
+                    yield();
                 }
                 digitalWrite( led_pin, LOW );
                 end = micros() + bit_delay * 500'000;
-                while ( micros() <= end );
+                while ( micros() <= end ){
+                    yield();
+                }
                 state = return_state;
                 break;
             default:
