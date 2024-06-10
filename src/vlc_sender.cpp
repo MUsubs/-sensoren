@@ -108,9 +108,7 @@ void VLCSender::run() {
                     end = start + bit_delay * 500'000;
                 }
                 while ( micros() <= end ) {
-                    analogWriteFreq(38000);
-                    analogWrite( led_pin, PWM_HIGH );
-                    analogWriteFreq(1000);
+                    digitalWrite( led_pin, HIGH );
                 }
                 digitalWrite( led_pin, LOW );
                 end = micros() + bit_delay * 500'000;
