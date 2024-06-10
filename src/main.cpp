@@ -4,7 +4,7 @@
 #include "vlc_receiver.hpp"
 #include "vlc_receiver_test.hpp"
 
-int photo_pin;
+int photo_pin = 26;
 
 int led_pin = 3;
 unsigned int frequency = 4;
@@ -120,5 +120,5 @@ void setup() {
 std::deque<uint8_t> bytes = { 0b11001100, 0b00110011 };
 
 void loop() {
-    vTaskDelay( 1000 );
+    yield();
 }

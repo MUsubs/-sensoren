@@ -58,7 +58,7 @@ bool VLCReceiver::readHeader( uint8_t &header, double &pulse_length ) {
 }
 
 bool VLCReceiver::readByte( uint8_t &message, double &pulse_length ) {
-    float error = 0.01;
+    float error = 0.02;
     for ( unsigned int i = 0; i < 8; i++ ) {
         if ( !xQueueReceive( pulse_length_queue, &pulse_length, 0 ) ) {
             return false;
@@ -66,10 +66,10 @@ bool VLCReceiver::readByte( uint8_t &message, double &pulse_length ) {
 
         if ( pulse_length > ( ( bit_delay / 2 ) + error ) &&
              pulse_length <= ( bit_delay + error ) ) {
-            message |= 1;
             message <<= 1;
+            message |= 1;
 
-        } else if ( pulse_length > 0 &&
+        } else if ( pulse_length > 0 + error &&
                     pulse_length < ( ( bit_delay / 2 ) + error ) ) {
             message <<= 1;
         }
