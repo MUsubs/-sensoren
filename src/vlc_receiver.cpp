@@ -99,7 +99,7 @@ void VLCReceiver::run() {
                         state = MESSAGE;
                     }
                 }
-                taskYIELD();
+                yield();
 
                 break;
 

@@ -98,6 +98,7 @@ void Photodiode::run() {
                     pulse_length += (micros() - start) / 1'000'000.0;
                 } else {
                     // Serial.printf("Pulse length sent = %lf\n", pulse_length);
+                    pulse_length += (micros() - start) / 1'000'000.0;
                     for ( auto &listener : PhotodiodeListenerArr ) {
                         listener->pulseDetected( pulse_length );
                     }
