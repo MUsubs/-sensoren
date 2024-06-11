@@ -129,4 +129,9 @@ void VLCReceiver::run() {
     }
 }
 
+void VLCReceiver::setFrequency( unsigned int new_frequency ) {
+    frequency = new_frequency;
+    bit_delay = 1.0 / new_frequency;
+}
+
 }  // namespace rec

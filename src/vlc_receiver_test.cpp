@@ -18,6 +18,7 @@ void VLCReceiverTest::byteReceived( uint8_t &byte ) {
 void VLCReceiverTest::printResults( uint32_t &result ) {
     // Create a mask with the highest bit set
     uint32_t mask = 1UL << TEST_BYTES_N-1;
+    int total = 0;
     Serial.print( "Test Results : " );
 
     // Iterate through each bit
@@ -25,14 +26,15 @@ void VLCReceiverTest::printResults( uint32_t &result ) {
         // Check if the current bit is set and print '1' or '0'
         if ( result & mask ) {
             Serial.print( '1' );
+            total++;
         } else {
             Serial.print( '0' );
         }
         // Shift the mask to the right for the next bit
         mask >>= 1;
     }
-
     Serial.print( ".\n" );
+    Serial.printf("==TESTS== Succesfully passed %d / 32 tests\n", total);
 }
 
 void printbyte( uint8_t &result ) {

@@ -13,7 +13,7 @@ namespace rec {
 
 class ReceiverListener {
 public:
-    virtual void byteReceived( uint8_t& byte ) = 0;
+    virtual void byteReceived( uint8_t &byte ) = 0;
 };
 
 class VLCReceiver : PhotodiodeListener {
@@ -33,6 +33,8 @@ public:
     bool isValidCheckSum( const uint16_t &message );
 
     void run();
+
+    void setFrequency( unsigned int new_frequency );
 
 private:
     int phot_pin;

@@ -117,9 +117,12 @@ void setup() {
     }
 }
 
-// 204, 51
-std::deque<uint8_t> bytes = { 0b11001100, 0b00110011 };
-
 void loop() {
+    if ( Serial.available() > 0 ) {
+        String incoming_data = Serial.readString();
+        Serial.printf( "==INPUT== Setting VLC Receiver frequency to %d\n",
+                       incoming_data.toInt() );
+        vlc_receiver.setFrequency( incoming_data.toInt() );
+    }
     yield();
 }
