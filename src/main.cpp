@@ -13,11 +13,11 @@ unsigned int frequency = 10;
 rec::Photodiode photodiode = { photo_pin, frequency };
 xTaskHandle photodiode_task_handle;
 
-rec::VLCReceiver vlc_receiver = { photodiode, frequency };
-xTaskHandle vlc_receiver_task_handle;
+// rec::VLCReceiver vlc_receiver = { photodiode, frequency };
+// xTaskHandle vlc_receiver_task_handle;
 
-rec::VLCReceiverTest receiver_test = { vlc_receiver };
-xTaskHandle receiver_test_task_handle;
+// rec::VLCReceiverTest receiver_test = { vlc_receiver };
+// xTaskHandle receiver_test_task_handle;
 
 
 void phototdiode_task( void* pvParameters ) {
@@ -31,29 +31,29 @@ void phototdiode_task( void* pvParameters ) {
     delete photodiode;
 }
 
-void vlc_receiver_task( void* pvParameters ) {
-    rec::VLCReceiver* vlc_receiver =
-        static_cast<rec::VLCReceiver*>( pvParameters );
+// void vlc_receiver_task( void* pvParameters ) {
+//     rec::VLCReceiver* vlc_receiver =
+//         static_cast<rec::VLCReceiver*>( pvParameters );
 
-    vlc_receiver->run();
-    Serial.printf(
-        "== INFO == VLCReceiver task exited, deleting task and object" );
+//     vlc_receiver->run();
+//     Serial.printf(
+//         "== INFO == VLCReceiver task exited, deleting task and object" );
 
-    vTaskDelete( vlc_receiver_task_handle );
-    delete vlc_receiver;
-}
+//     vTaskDelete( vlc_receiver_task_handle );
+//     delete vlc_receiver;
+// }
 
-void vlc_receiver_test_task( void* pvParameters ) {
-    rec::VLCReceiverTest* receiver_test =
-        static_cast<rec::VLCReceiverTest*>( pvParameters );
+// void vlc_receiver_test_task( void* pvParameters ) {
+//     rec::VLCReceiverTest* receiver_test =
+//         static_cast<rec::VLCReceiverTest*>( pvParameters );
 
-    receiver_test->run();
-    Serial.printf(
-        "== INFO == VLCReceiverTest task exited, deleting task and object" );
+//     receiver_test->run();
+//     Serial.printf(
+//         "== INFO == VLCReceiverTest task exited, deleting task and object" );
 
-    vTaskDelete( receiver_test_task_handle );
-    delete receiver_test;
-}
+//     vTaskDelete( receiver_test_task_handle );
+//     delete receiver_test;
+// }
 
 bool CreatReceiverTasks() {
     bool result = true;
@@ -71,31 +71,31 @@ bool CreatReceiverTasks() {
         result = false;
     }
 
-    auto vlc_receiver_task_return =
-        xTaskCreate( vlc_receiver_task, "VLC_RECEIVER_RUN", 2000,
-                     (void*)&vlc_receiver, 1, &vlc_receiver_task_handle );
-    if ( vlc_receiver_task_return != pdPASS ) {
-        vTaskDelete( vlc_receiver_task_handle );
-        Serial.printf(
-            "== ERROR == Creating task for vlc_receiver failed, error code = "
-            "%d\n",
-            vlc_receiver_task_return );
+    // auto vlc_receiver_task_return =
+    //     xTaskCreate( vlc_receiver_task, "VLC_RECEIVER_RUN", 2000,
+    //                  (void*)&vlc_receiver, 1, &vlc_receiver_task_handle );
+    // if ( vlc_receiver_task_return != pdPASS ) {
+    //     vTaskDelete( vlc_receiver_task_handle );
+    //     Serial.printf(
+    //         "== ERROR == Creating task for vlc_receiver failed, error code = "
+    //         "%d\n",
+    //         vlc_receiver_task_return );
 
-        result = false;
-    }
+    //     result = false;
+    // }
 
-    auto vlc_receiver_test_task_return =
-        xTaskCreate( vlc_receiver_test_task, "VLC_RECEIVER_TEST_RUN", 2000,
-                     (void*)&receiver_test, 1, &receiver_test_task_handle );
-    if ( vlc_receiver_test_task_return != pdPASS ) {
-        vTaskDelete( receiver_test_task_handle );
-        Serial.printf(
-            "== ERROR == Creating task for vlc_receiver failed, error code = "
-            "%d\n",
-            vlc_receiver_test_task_return );
+    // auto vlc_receiver_test_task_return =
+    //     xTaskCreate( vlc_receiver_test_task, "VLC_RECEIVER_TEST_RUN", 2000,
+    //                  (void*)&receiver_test, 1, &receiver_test_task_handle );
+    // if ( vlc_receiver_test_task_return != pdPASS ) {
+    //     vTaskDelete( receiver_test_task_handle );
+    //     Serial.printf(
+    //         "== ERROR == Creating task for vlc_receiver failed, error code = "
+    //         "%d\n",
+    //         vlc_receiver_test_task_return );
 
-        result = false;
-    }
+    //     result = false;
+    // }
 
     return result;
 }
@@ -106,6 +106,7 @@ void setup() {
     while ( !Serial ) {
         ;
     }
+    vTaskDelay(3000);
 
     bool result = CreatReceiverTasks();
 

@@ -34,6 +34,7 @@ VLCReceiver::VLCReceiver( Photodiode &photodiode, unsigned int frequency ) :
 void VLCReceiver::pulseDetected( double pulse_length ) {
     double value = pulse_length;
     xQueueSend( pulse_length_queue, &value, 0 );
+    Serial.printf("Pulse length detected of : %lf\n", pulse_length);
 }
 
 bool VLCReceiver::readHeader( uint8_t &header, double &pulse_length ) {
