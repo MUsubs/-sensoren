@@ -37,8 +37,6 @@ private:
     unsigned int frequency;
     double bit_delay;
 
-    xTaskHandle this_task_handle;
-
     enum state_t { IDLE, SIGNAL };
     state_t state = IDLE;
 

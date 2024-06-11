@@ -10,22 +10,15 @@ void Photodiode::addListener( PhotodiodeListener *listener ) {
 }
 
 Photodiode::Photodiode( int phot_pin, unsigned int frequency ) :
-    phot_pin( phot_pin ), frequency( frequency ), this_task_handle{} {
+    phot_pin( phot_pin ), frequency( frequency ) {
     pinMode( phot_pin, INPUT );
 
     if ( frequency <= 0 ) {
-        Serial.printf(
-            "== ERROR == frequency <= 0, setting it to 1 and continuing" );
         frequency = 1;
     }
     bit_delay = 1.f / (float)frequency;
 
-    if ((int)low_threshold-200 < 0) {
-        Serial.println("==ERROR== WTF");
-    } else {
-        low_threshold = analogRead( phot_pin ) - 200;
-    }
-    Serial.printf( "threshold: %d\n", low_threshold );
+    low_threshold = analogRead( phot_pin ) - 200;
 }
 
 void Photodiode::run() {
