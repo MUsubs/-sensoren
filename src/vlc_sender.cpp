@@ -30,7 +30,7 @@ void VLCSender::sendBytes( std::deque<uint8_t>& bytes ) {
 
 void VLCSender::setFrequency( unsigned int new_frequency ) {
     frequency = new_frequency;
-    bit_delay = 1 / frequency;
+    bit_delay = 1.0 / frequency;
 }
 
 unsigned int VLCSender::getFrequency() {

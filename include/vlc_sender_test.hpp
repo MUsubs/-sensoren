@@ -13,13 +13,15 @@ namespace sen {
 
 class VLCSenderTest {
 public:
-    VLCSenderTest( int led_pin, unsigned int frequency );
-
+    VLCSenderTest( VLCSender& vlc_sender );
     void start( bool generate_headers = false );
 
 private:
-    VLCSender vlc_sender;
+    VLCSender& vlc_sender;
     int status_led_pin;
+    xTaskHandle vlc_sender_task_handle;
+
+    void vlc_sender_task( void* pvParameters );
 
     void statusError();
     void statusSending();
