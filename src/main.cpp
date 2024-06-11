@@ -7,7 +7,7 @@
 int photo_pin = 26;
 
 int led_pin = 3;
-unsigned int frequency = 4;
+unsigned int frequency = 10;
 
 
 rec::Photodiode photodiode = { photo_pin, frequency };

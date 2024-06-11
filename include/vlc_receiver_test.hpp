@@ -14,7 +14,7 @@ namespace rec {
 
 class VLCReceiverTest : ReceiverListener {
 public:
-    VLCReceiverTest(VLCReceiver &vlc_receiver);
+    VLCReceiverTest( VLCReceiver &vlc_receiver );
 
     void byteReceived( uint8_t &byte ) override;
 
@@ -33,6 +33,7 @@ private:
     state_t state = IDLE;
 
     uint32_t result = 0;
+    // uint8_t result = 0;
 };
 
 }  // namespace rec

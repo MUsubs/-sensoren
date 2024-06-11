@@ -20,7 +20,8 @@ Photodiode::Photodiode( int phot_pin, unsigned int frequency ) :
     }
     bit_delay = 1.f / (float)frequency;
 
-    low_threshold = analogRead( phot_pin )-100;
+    low_threshold = analogRead( phot_pin ) - 200;
+    Serial.printf("threshold: %d\n", low_threshold);
 }
 
 void Photodiode::run() {
@@ -36,7 +37,6 @@ void Photodiode::run() {
     for ( ;; ) {
         // Serial.printf("signal = %d\n", photo_value);
         switch ( state ) {
-            
             case IDLE:
 
                 // start = micros();
@@ -44,9 +44,9 @@ void Photodiode::run() {
                 // end = start + main_clock_us;
 
                 // while ( micros() <= end ) {
-                //     // Serial.printf("Waiting IDLE reset clock = %lf\n", reset_clock);
+                //     // Serial.printf("Waiting IDLE reset clock = %lf\n",
+                //     reset_clock);
                 // }
-
 
                 // photo_signal = digitalRead( phot_pin );
 
@@ -63,10 +63,11 @@ void Photodiode::run() {
                     // Serial.println("STATE = SIGNAL");
                 }
 
-                // Serial.printf("Reset clock in Photodiode = %lf\n", reset_clock);
-                reset_clock += (micros() - last) / 1'000'000.0;
-                if(reset_clock >= 2 || digitalRead(3)){
-                    for (auto &listener : PhotodiodeListenerArr) {
+                // Serial.printf("Reset clock in Photodiode = %lf\n",
+                // reset_clock);
+                reset_clock += ( micros() - last ) / 1'000'000.0;
+                if ( reset_clock >= 2 || digitalRead( 3 ) ) {
+                    for ( auto &listener : PhotodiodeListenerArr ) {
                         listener->resetQueue();
                     }
                     reset_clock = 0;
@@ -95,10 +96,10 @@ void Photodiode::run() {
                 // Serial.printf( "photo_value : %d\n", photo_value );
 
                 if ( photo_value < low_threshold ) {
-                    pulse_length += (micros() - start) / 1'000'000.0;
+                    pulse_length += ( micros() - start ) / 1'000'000.0;
                 } else {
                     // Serial.printf("Pulse length sent = %lf\n", pulse_length);
-                    pulse_length += (micros() - start) / 1'000'000.0;
+                    pulse_length += ( micros() - start ) / 1'000'000.0;
                     for ( auto &listener : PhotodiodeListenerArr ) {
                         listener->pulseDetected( pulse_length );
                     }
