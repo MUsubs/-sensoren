@@ -6,7 +6,7 @@
 xTaskHandle vlc_sender_test_task_handle;
 xTaskHandle vlc_sender_task_handle;
 
-sen::VLCSender vlc_sender{LED_BUILTIN, 10};
+sen::VLCSender vlc_sender{3, 10};
 
 void vlc_sender_test_task(void* pvParameters){
     sen::VLCSenderTest vlc_sender_test(vlc_sender);
