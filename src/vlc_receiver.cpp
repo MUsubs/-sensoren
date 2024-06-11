@@ -1,6 +1,6 @@
 #include "vlc_receiver.hpp"
 
-#define QUEUE_LENGTH 32
+#define QUEUE_LENGTH 300
 
 namespace rec {
 
@@ -11,9 +11,9 @@ void VLCReceiver::addListener( ReceiverListener *listener ) {
     }
 }
 
-void VLCReceiver::resetQueue(){
-    Serial.println("Resetting pulse length queue");
-    xQueueReset(pulse_length_queue);
+void VLCReceiver::resetQueue() {
+    Serial.println( "Resetting pulse length queue" );
+    xQueueReset( pulse_length_queue );
 }
 
 VLCReceiver::VLCReceiver( Photodiode &photodiode, unsigned int frequency ) :
@@ -95,7 +95,7 @@ void VLCReceiver::run() {
             case IDLE:
 
                 if ( pulse_length_queue != NULL ) {
-                    if ( uxQueueMessagesWaiting( pulse_length_queue ) >= 8 ) {
+                    if ( uxQueueMessagesWaiting( pulse_length_queue ) >= 256 ) {
                         state = MESSAGE;
                     }
                 }
@@ -112,11 +112,11 @@ void VLCReceiver::run() {
                 break;
 
             case MESSAGE:
-
-                readByte( byte, pulse_length );
-
-                for ( auto &listener : ReceiverListenerArr ) {
-                    listener->byteReceived( byte );
+                for ( unsigned int i = 0; i < 32; i++ ) {
+                    readByte( byte, pulse_length );
+                    for ( auto &listener : ReceiverListenerArr ) {
+                        listener->byteReceived( byte );
+                    }
                 }
 
                 byte = 0;
