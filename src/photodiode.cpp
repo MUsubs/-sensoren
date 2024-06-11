@@ -17,8 +17,8 @@ Photodiode::Photodiode( int phot_pin, unsigned int frequency ) :
         frequency = 1;
     }
     bit_delay = 1.f / (float)frequency;
-
-    low_threshold = analogRead( phot_pin ) - 200;
+    int read = analogRead( phot_pin );
+    low_threshold = read - ( 0.1 * read );
 }
 
 void Photodiode::run() {
@@ -28,6 +28,7 @@ void Photodiode::run() {
     unsigned long start;
     unsigned long end;
     unsigned long last;
+    int read;
 
     double reset_clock = 0;
 
@@ -44,6 +45,9 @@ void Photodiode::run() {
 
                 reset_clock += ( micros() - last ) / 1'000'000.0;
                 if ( reset_clock >= 2 || digitalRead( 3 ) ) {
+                    read = analogRead( phot_pin );
+                    low_threshold = read - ( 0.2 * read );
+                    Serial.printf("==INFO== Value read from photo_pin = %d | New low threshold = %d\n", read, low_threshold);
                     for ( auto &listener : PhotodiodeListenerArr ) {
                         listener->resetQueue();
                     }
