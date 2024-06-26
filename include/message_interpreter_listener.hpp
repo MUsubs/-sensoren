@@ -1,7 +1,7 @@
 #ifndef R2D2_MESSAGE_INTERPRETER_LISTENER_HPP
 #define R2D2_MESSAGE_INTERPRETER_LISTENER_HPP
 
-#include "packet_enums.hpp"
+#include "packet_enums.h"
 
 namespace sen {
 
