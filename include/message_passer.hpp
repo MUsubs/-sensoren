@@ -24,8 +24,17 @@ namespace sen {
 			*/
             MessagePasser( DataSender data_sender, int task_priority );
 
+   			void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data ) override;
+		    void receivedINST( InstPacket_t& inst_p ) override; 
+		    void receivedINST( inst_t inst_type ) override;
+    		void receivedUPDATE( UpdatePacket_t& update_p ) override;
+		    void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data ) override;
+			void receivedSENS( sens_t sensor, float data ) override;
+
+
 		private:
             SerialControl& serial_control;
+
     };
 
 } // namespace sen
