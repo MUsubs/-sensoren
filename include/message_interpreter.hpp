@@ -32,11 +32,19 @@ namespace sen {
 class MessageInterpreter {
 public:
     /**
-     * @brief Initialises the MessageInterpreter task and the corresponding
+     * @brief Construct a new Message Interpreter object
+     * Initialises the MessageInterpreter task and the corresponding
      * queues
-     *
+     * 
+     * @param queue_length
+     * @param task_priority
      */
     MessageInterpreter( int queue_length, int task_priority );
+
+    /**
+     * @brief Destroy the Message Interpreter object
+     * Deletes task and queues
+     */
     ~MessageInterpreter();
 
     /**
@@ -142,9 +150,9 @@ private:
      * @return void
      * @internal
      */
-    void interpretHeader( sen::packet_t &type, sen::inst_t &instruction,
-                          sen::sens_t &sensor_id, sen::data_t &data_type,
-                          uint8_t &bytes_amount );
+    void interpretHeader(
+        sen::packet_t &type, sen::inst_t &instruction, sen::sens_t &sensor_id,
+        sen::data_t &data_type, uint8_t &bytes_amount );
 
     /**
      * @brief Resets the message interpreter to its initial state.
